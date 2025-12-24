@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spam Detector - AI Email Classifier</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <header>
+            <div class="logo">
+                <svg width="50" height="50" viewBox="0 0 50 50">
+                    <circle cx="25" cy="25" r="20" fill="#667eea" opacity="0.2"/>
+                    <path d="M25 10 L40 20 L40 35 L25 45 L10 35 L10 20 Z" fill="none" stroke="#667eea" stroke-width="2"/>
+                    <circle cx="25" cy="25" r="8" fill="#764ba2"/>
+                </svg>
+                <h1>Spam Detector</h1>
+            </div>
+            <p class="subtitle">AI-Powered Email & Message Classification</p>
+        </header>
+
+        <main>
+            <div class="input-section">
+                <div class="input-header">
+                    <h2>Check Your Message</h2>
+                    <div class="stats">
+                        <span class="stat" id="charCount">0 characters</span>
+                    </div>
+                </div>
+                
+                <textarea 
+                    id="messageInput" 
+                    placeholder="Paste your email or message here...&#10;&#10;Example:&#10;'Congratulations! You've won $1000. Click here to claim now!'&#10;&#10;or&#10;&#10;'Hey, are we still meeting for lunch tomorrow?'"
+                    rows="8"
+                ></textarea>
+                
+                <div class="button-group">
+                    <button id="checkBtn" class="btn btn-primary">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+                            <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm9.707 5.707a1 1 0 00-1.414-1.414L9 12.586l-1.293-1.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"/>
+                        </svg>
+                        Check Message
+                    </button>
+                    <button id="clearBtn" class="btn btn-secondary">
+                        <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"/>
+                        </svg>
+                        Clear
+                    </button>
+                </div>
+
+                <div class="examples">
+                    <p><strong>Try these examples:</strong></p>
+                    <div class="example-buttons">
+                        <button class="example-btn" data-text="Congratulations! You've won a $1000 Walmart gift card. Click here to claim now! Limited time offer!">🎁 Spam Example</button>
+                        <button class="example-btn" data-text="Hey Sarah, are we still meeting for lunch tomorrow at the cafe? Let me know!">💬 Ham Example</button>
+                        <button class="example-btn" data-text="URGENT: Your bank account has been compromised. Click this link immediately to reset your password and secure your account.">⚠️ Phishing Example</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="resultSection" class="result-section hidden">
+                <div class="result-card">
+                    <div class="result-icon" id="resultIcon"></div>
+                    <h3 id="resultTitle"></h3>
+                    <p id="resultDescription"></p>
+                    
+                    <div class="confidence-meter">
+                        <div class="confidence-label">
+                            <span>Confidence</span>
+                            <span id="confidenceValue" class="confidence-value"></span>
+                        </div>
+                        <div class="progress-bar">
+                            <div id="progressFill" class="progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="probability-bars">
+                        <div class="prob-bar">
+                            <div class="prob-label">
+                                <span>🛡️ Ham (Safe)</span>
+                                <span id="hamProb"></span>
+                            </div>
+                            <div class="prob-bg">
+                                <div id="hamBar" class="prob-fill ham-fill"></div>
+                            </div>
+                        </div>
+                        <div class="prob-bar">
+                            <div class="prob-label">
+                                <span>⚠️ Spam (Unsafe)</span>
+                                <span id="spamProb"></span>
+                            </div>
+                            <div class="prob-bg">
+                                <div id="spamBar" class="prob-fill spam-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="warningBox" class="warning-box hidden">
+                        <h4>⚠️ Warning Signs Detected:</h4>
+                        <ul id="warningList"></ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="loadingSection" class="loading-section hidden">
+                <div class="spinner"></div>
+                <p>Analyzing message...</p>
+            </div>
+        </main>
+
+        <script>
+document.getElementById('checkBtn').addEventListener('click', async () => {
+    const text = document.getElementById('messageInput').value.trim();
+
+    if (!text) {
+        alert('Please enter a message first!');
+        return;
+    }
+
+    // Show loading
+    document.getElementById('loadingSection').classList.remove('hidden');
+    document.getElementById('resultSection').classList.add('hidden');
+
+    try {
+        const response = await fetch('/predict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ text })
+        });
+
+        const data = await response.json();
+
+        document.getElementById('loadingSection').classList.add('hidden');
+
+        if (data.error) {
+            alert(data.error);
+            return;
+        }
+
+        // Show result section
+        document.getElementById('resultSection').classList.remove('hidden');
+
+        // Title & icon
+        document.getElementById('resultTitle').innerText = data.prediction;
+        document.getElementById('resultDescription').innerText =
+            data.is_spam ? 'This message looks dangerous.' : 'This message looks safe.';
+
+        // Confidence
+        document.getElementById('confidenceValue').innerText = data.confidence + '%';
+        document.getElementById('progressFill').style.width = data.confidence + '%';
+
+        // Probabilities
+        document.getElementById('spamProb').innerText = data.spam_probability + '%';
+        document.getElementById('hamProb').innerText = data.ham_probability + '%';
+
+        document.getElementById('spamBar').style.width = data.spam_probability + '%';
+        document.getElementById('hamBar').style.width = data.ham_probability + '%';
+
+    } catch (err) {
+        document.getElementById('loadingSection').classList.add('hidden');
+        alert('Failed to connect to server.');
+        console.error(err);
+    }
+});
+</script>
+
+
+        <footer>
+            <p>Powered by Machine Learning | Naive Bayes Classifier with TF-IDF</p>
+            <div class="tech-badges">
+                <span class="badge">🤖 AI</span>
+                <span class="badge">📊 NLP</span>
+                <span class="badge">🔒 Security</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/animation.js') }}"></script>
+</body>
+</html>

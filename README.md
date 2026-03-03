@@ -1,4 +1,4 @@
-# Simple Spam Detector
+## Simple Spam Detector
 
 An AI-powered email and message classification system built with Machine Learning. This project uses Natural Language Processing (NLP) and Naive Bayes classifier to detect spam messages with high accuracy.
 

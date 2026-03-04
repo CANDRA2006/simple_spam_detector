@@ -30,7 +30,7 @@ class TextPreprocessor:
         # Remove URLs
         text = re.sub(r'http\S+|www\S+|https\S+', '', text, flags=re.MULTILINE)
         
-        # Remove email addresses
+        # Remove email address
         text = re.sub(r'\S+@\S+', '', text)
         
         # Remove special characters and digits

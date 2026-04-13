@@ -64,7 +64,7 @@ simple_spam_detector/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/simple_spam_detector.git
+   git clone https://github.com/candra2006/simple_spam_detector.git
    cd simple_spam_detector
    ```
 

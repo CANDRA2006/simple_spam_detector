@@ -1,7 +1,9 @@
 import joblib
 import os
 import re
+import pickle
 import nltk
+from src.preprocess import clean_text
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
 

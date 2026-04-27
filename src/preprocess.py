@@ -7,6 +7,7 @@ from nltk.stem import PorterStemmer
 from sklearn.model_selection import train_test_split
 import pickle
 import os
+import re
 
 # Download NLTK data
 try:
